@@ -1,3 +1,5 @@
+from re import escape
+
 import pytest
 
 from app.switchboard import Switchboard
@@ -17,6 +19,33 @@ def test_register_call_creates_local_and_foreign_users() -> None:
     assert active_call.receiver.id == 2
 
 
+def test_register_creates_with_not_all_fields() -> None:
+    switchboard = Switchboard()
+    
+    with pytest.raises(ValueError, match="Ожидается строка из 6 полей, передано 4"):
+        active_call = switchboard.register_call(
+        "1, Anton Gorodetsky, +79990000000,John Smith"
+        )
+
+
+def test_creating_local_user_with_invalid_phone() -> None:
+    switchboard = Switchboard()
+    
+    with pytest.raises(ValueError, match=escape("Неверный формат номера телефона локального пользователя. Пример телефона: +71234567890")):
+        active_call = switchboard.register_call(
+        "1, Anton Gorodetsky,+79991fkfkf, 2, Peter Parker,+78880000000"
+        )
+
+
+def test_creating_foreign_user_with_invalid_phone() -> None:
+    switchboard = Switchboard()
+    
+    with pytest.raises(ValueError, match=escape("Неверный формат номера телефона иностранного пользователя. Пример телефона: +81234567890")):
+        active_call = switchboard.register_call(
+        "1, Anton Gorodetsky,+79990000000, 2, Peter Parker,+89949449jfds"
+        )
+
+
 def test_register_call_counts_active_calls() -> None:
     switchboard = Switchboard()
 
@@ -28,6 +57,24 @@ def test_register_call_counts_active_calls() -> None:
     )
 
     assert switchboard.get_active_calls_count() == 2
+
+
+def test_register_call_with_trims() -> None:
+    switchboard = Switchboard()
+
+    switchboard.register_call(
+        "133 ,  Anton Gorodetsky  ,    +79990000000  ,  222  ,  Peter Parker  ,  +78880000000"
+    )
+    
+    active_call = switchboard.get_active_calls()[-1]
+    
+    assert switchboard.get_active_calls_count() == 1
+    assert active_call.caller.id == 133
+    assert active_call.caller.fullname == "Anton Gorodetsky"
+    assert active_call.receiver.id == 222
+    assert active_call.receiver.fullname == "Peter Parker"
+    assert active_call.receiver.phone == "+78880000000"
+    
 
 
 def test_register_call_counts_calls_between_local_and_foreign_users() -> None:

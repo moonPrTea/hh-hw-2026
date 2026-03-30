@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.users import User
+from app.users import User, ForeignUser, LocalUser
 
 
 LOCAL_PHONE_PREFIX = "+7"
@@ -21,6 +21,13 @@ class ActiveCall:
 class Switchboard:
     def __init__(self) -> None:
         self._active_calls: list[ActiveCall] = []
+        self._count_local_foreign_calls: int = 0
+        
+    def check_user_phone(self, id: int, fullname: str, phone: str) -> User:
+        if phone.startswith("+7"):
+            return LocalUser(id, fullname, phone)
+        
+        return ForeignUser(id, fullname, phone)
 
     def register_call(self, raw_call: str) -> ActiveCall:
         '''
@@ -29,10 +36,39 @@ class Switchboard:
 
         Например: "1001,Иван Петров,+71234567890,1085,Адам Яковлев,+71255556666"
         '''
-        pass  # Удалите `pass` и пишите ваш код
-
+        
+        call_parts = [item.strip() for item in raw_call.split(",")]
+        
+        if len(call_parts) != 6:
+            raise ValueError(f"Ожидается строка из 6 полей, передано {len(call_parts)}")
+        
+        caller_id, caller_fullname, caller_phone, receiver_id, receiver_fullname, receiver_phone = call_parts
+        
+        caller_user = self.check_user_phone(
+            id= int(caller_id), fullname=caller_fullname, 
+            phone=caller_phone
+        )
+        
+        receiver_user = self.check_user_phone(
+            id=int(receiver_id), fullname=receiver_fullname, 
+            phone=receiver_phone
+        )
+        
+        active_call = ActiveCall(caller_user, receiver_user)
+        self._active_calls.append(active_call)
+        
+        if active_call.is_cross_border:
+            self._count_local_foreign_calls += 1
+        
+        return active_call
+    
+    # Функция len() выполняется за O(1)
     def get_active_calls_count(self) -> int:
-        pass  # Удалите `pass` и пишите ваш код
-
+        return len(self._active_calls)
+    
+    # для реализации O(1) был создан счетчик, значения в который записываются в случае выполнения условия на этапе создания звонка
     def get_cross_border_calls_count(self) -> int:
-        pass  # Удалите `pass` и пишите ваш код
+        return self._count_local_foreign_calls
+    
+    def get_active_calls(self) -> list[ActiveCall]:
+        return self._active_calls
