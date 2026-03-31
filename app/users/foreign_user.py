@@ -13,4 +13,5 @@ class ForeignUser(User):
     
     def __post_init__(self):
         if not phone_pattern.search(self.phone):
-            raise ValueError("Неверный формат номера телефона иностранного пользователя. Пример телефона: +81234567890")
+            raise ValueError("Неверный формат номера телефона иностранного пользователя")
+        

@@ -13,4 +13,4 @@ class LocalUser(User):
     
     def __post_init__(self):
         if not phone_pattern.search(self.phone):
-            raise ValueError("Неверный формат номера телефона локального пользователя. Пример телефона: +71234567890")
+            raise ValueError("Неверный формат номера телефона локального пользователя")

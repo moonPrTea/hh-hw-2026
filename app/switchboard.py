@@ -23,11 +23,13 @@ class Switchboard:
         self._active_calls: list[ActiveCall] = []
         self._count_local_foreign_calls: int = 0
         
-    def check_user_phone(self, id: int, fullname: str, phone: str) -> User:
-        if phone.startswith("+7"):
-            return LocalUser(id, fullname, phone)
+    def create_user(self, id: str, fullname: str, phone: str) -> User:
+        user_id = int(id)
         
-        return ForeignUser(id, fullname, phone)
+        if phone.startswith(LOCAL_PHONE_PREFIX):
+            return LocalUser(user_id, fullname, phone)
+        
+        return ForeignUser(user_id, fullname, phone)
 
     def register_call(self, raw_call: str) -> ActiveCall:
         '''
@@ -44,13 +46,13 @@ class Switchboard:
         
         caller_id, caller_fullname, caller_phone, receiver_id, receiver_fullname, receiver_phone = call_parts
         
-        caller_user = self.check_user_phone(
-            id= int(caller_id), fullname=caller_fullname, 
+        caller_user = self.create_user(
+            id=caller_id, fullname=caller_fullname,
             phone=caller_phone
         )
         
-        receiver_user = self.check_user_phone(
-            id=int(receiver_id), fullname=receiver_fullname, 
+        receiver_user = self.create_user(
+            id=receiver_id, fullname=receiver_fullname, 
             phone=receiver_phone
         )
         
@@ -69,6 +71,3 @@ class Switchboard:
     # для реализации O(1) был создан счетчик, значения в который записываются в случае выполнения условия на этапе создания звонка
     def get_cross_border_calls_count(self) -> int:
         return self._count_local_foreign_calls
-    
-    def get_active_calls(self) -> list[ActiveCall]:
-        return self._active_calls
