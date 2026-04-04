@@ -74,6 +74,8 @@ def test_register_call_counts_calls_between_local_and_foreign_users() -> None:
     assert switchboard.get_cross_border_calls_count() == 1
 
 
+
+
 def test_create_user_correctly_converts_id_to_int() -> None:
     switchboard = Switchboard()
     
